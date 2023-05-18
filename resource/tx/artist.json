@@ -1,0 +1,35 @@
+{
+  "external_urls": {
+    "spotify": "https://open.spotify.com/artist/3AMFQZ3Tt549kShRG2IBYT"
+  },
+  "followers": {
+    "href": null,
+    "total": 58796
+  },
+  "genres": [
+    "kawaii future bass"
+  ],
+  "href": "https://api.spotify.com/v1/artists/3AMFQZ3Tt549kShRG2IBYT",
+  "id": "3AMFQZ3Tt549kShRG2IBYT",
+  "images": [
+    {
+      "height": 640,
+      "url": "https://i.scdn.co/image/ab6761610000e5eb2ccf922c26dbdbd4ee2d5a8e",
+      "width": 640
+    },
+    {
+      "height": 320,
+      "url": "https://i.scdn.co/image/ab676161000051742ccf922c26dbdbd4ee2d5a8e",
+      "width": 320
+    },
+    {
+      "height": 160,
+      "url": "https://i.scdn.co/image/ab6761610000f1782ccf922c26dbdbd4ee2d5a8e",
+      "width": 160
+    }
+  ],
+  "name": "Aiobahn",
+  "popularity": 53,
+  "type": "artist",
+  "uri": "spotify:artist:3AMFQZ3Tt549kShRG2IBYT"
+}

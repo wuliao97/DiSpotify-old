@@ -104,52 +104,13 @@ def dict_to_list(obj:dict):
 
 
 
-
-def spotify_forming(user:discord.Member):
-    if material:= next((activity for activity in user.activities if isinstance(activity, discord.Spotify)), None):
-        artists = material.artists
-        artists = ", ".join(artists) if isinstance(artists, list) else material.artist
-        return [True, material, artists]
-    else:
-        return [False, None, None]
+def check(view):
+    return True if view == "Yes" else False
 
 
 
 
-def data_cutting(title:str, album:str) -> str:
-    title = title.translate(str.maketrans({"[":"(", ")":")"}))
-    title = title[:17] + "..." if len(title) > 17 else title
-    album = album[:15] + "..." if len(album) > 15 else album
 
-    return title, album
-
-
-
-
-def spotify_extract(id) -> list:
-    result = cfg.sp.track(id)
-    material = [result['external_urls']['spotify']]
-    material.append(result['album']['external_urls']['spotify'])
-    material.append([artist['external_urls']['spotify'] for artist in result['artists']])
-
-    return material
-
-
-
-
-def spotify_ids_extract(id) -> list[str, list[str]]:
-    song_obj = cfg.sp.track(id)
-    artists  = [i["id"] for i in song_obj["artists"]]
-
-    return [id, song_obj["album"]["id"], artists]
-
-
-
-
-def id_or_url_check(id_or_url:str):
-    if id_or_url.startswith(cfg.spotify_url):
-        id_or_url = id_or_url.rsplit(cfg.spotify_url, "", maxsplit=3)
-    return id_or_url
 
 
 

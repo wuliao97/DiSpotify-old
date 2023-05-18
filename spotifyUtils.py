@@ -9,14 +9,86 @@ import os
 import io
 import random
 import urllib
-import textwrap, requests, datetime
+import textwrap, requests, datetime, dateutil
 
 from PIL import Image, ImageDraw, ImageFont
 
 
-check = lambda view: True if view == "Yes" else False
 
-search_url = lambda param: "https://open.spotify.com/search/" + urllib.parse.quote(str(param))
+
+
+
+def search_url(param):
+    return "https://open.spotify.com/search/" + urllib.parse.quote(str(param))
+
+
+
+def check_user(user:discord.Member):
+    flag     = False
+    material = next((activity for activity in user.activities if isinstance(activity, discord.Spotify)), None)
+    message  = ""
+
+    if user.status in ["offline", "invisible"]:
+        message = "This User status is OFFLINE!"
+        
+    elif material is None:
+        message = f"{user.mention} is not listening to Spotify!"
+    
+    else:
+        flag = True
+        
+    return flag, material, message
+
+
+
+def spotify(user:discord.Member):
+    flag, material, message = check_user(user)
+            
+    return flag, material, message
+        
+
+
+
+def artists_cut(obj:discord.Spotify):
+    return ", ".join(obj.artists) if isinstance(obj.artists, list) else obj.artist
+
+
+
+def track_time(material:discord.Spotify):
+    return dateutil.parser.parse(str(material.duration)).strftime('%M:%S')
+
+
+
+def data_cutting(title:str, album:str) -> str:
+    title = title.translate(str.maketrans({"[":"(", ")":")"}))
+    title = title[:17] + "..." if len(title) > 17 else title
+    album = album[:15] + "..." if len(album) > 15 else album
+
+    return title, album
+
+
+
+
+def spotify_extract(id) -> list:
+    result = cfg.sp.track(id)
+    material = [result['external_urls']['spotify']]
+    material.append(result['album']['external_urls']['spotify'])
+    material.append([artist['external_urls']['spotify'] for artist in result['artists']])
+
+    return material
+
+
+def spotify_ids_extract(id) -> list[str, list[str]]:
+    song_obj = cfg.sp.track(id)
+    artists  = [i["id"] for i in song_obj["artists"]]
+
+    return [id, song_obj["album"]["id"], artists]
+
+
+def id_or_url_check(id_or_url:str):
+    if id_or_url.startswith(cfg.spotify_url):
+        id_or_url = id_or_url.rsplit(cfg.spotify_url, "", maxsplit=3)
+    return id_or_url
 
 
 
@@ -45,7 +117,7 @@ class SpotifyButtonS(discord.ui.View):
 
 
 class SpotifySelectUIView(discord.ui.View):
-    def __init__(self, spotify_obj, limit, keyword, url, ephemeral=False, interaction=None, timeout=500, disable_on_timeout=True):
+    def __init__(self, spotify_obj, limit, keyword, url, ephemeral=False, interaction=None, timeout=360, disable_on_timeout=True):
         super().__init__(timeout=timeout, disable_on_timeout=disable_on_timeout)
         self.sobj    = spotify_obj
         self.limit   = limit
@@ -197,15 +269,28 @@ class SpotifyDetails(discord.ui.View):
         embed = discord.Embed(color=cfg.SPFW)
         embed.set_author(name="Album Info")
         embed.set_thumbnail(url=self.album_obj["images"][0]["url"])
-        embed.add_field(name="Album Name",        value="> **[%s](%s)**" % (self.album_obj["name"], self.album_obj["external_urls"]["spotify"]), inline=False)
-        embed.add_field(name="Artist",            value="> **[%s](%s)**" % (self.album_obj["artists"][0]["name"], self.album_obj["artists"][0]["external_urls"]["spotify"]), inline=False)
-        embed.add_field(name="Total tracks",      value="> **%s**" % self.album_obj["total_tracks"])
-        embed.add_field(name="Available markets", value="> **%s**" % (len(self.album_obj["available_markets"])))
-        embed.add_field(name="Release date",      value="> **%s**" % (self.album_obj["release_date"]))
+        embed.add_field(
+            name="Album Name",        value="> **[%s](%s)**" % (self.album_obj["name"], self.album_obj["external_urls"]["spotify"]), inline=False
+        )
+        embed.add_field(
+            name="Artist",            value="> **[%s](%s)**" % (self.album_obj["artists"][0]["name"], self.album_obj["artists"][0]["external_urls"]["spotify"]), inline=False
+        )
+        embed.add_field(
+            name="Total tracks",      value="> **%s**" % self.album_obj["total_tracks"]
+        )
+        embed.add_field(
+            name="Available markets", value="> **%s**" % (len(self.album_obj["available_markets"]))
+        )
+        embed.add_field(
+            name="Release date",      value="> **%s**" % (self.album_obj["release_date"])
+        )
         
         total_time = sum([artist["duration_ms"] / 1000 for artist in self.album_obj["tracks"]["items"]])
         total_time = datetime.datetime.fromtimestamp(total_time).strftime(TimeFormat.EIGHT if total_time > 3600 else TimeFormat.TEN)
-        embed.set_footer(text="%s | %s" % (total_time, self.album_obj["label"]), icon_url=cfg.SP_US["GREEN"])
+        
+        embed.set_footer(
+            text="%s, Label: %s" % (total_time, self.album_obj["label"]), icon_url=cfg.SP_US["GREEN"]
+        )
         
         await inter.respond(embed=embed, ephemeral=self.ephemeral)
 
@@ -253,7 +338,6 @@ class SpotifyDetailsArtists(discord.ui.Button):
         
 
     async def callback(self, inter:discord.Interaction):
-        print(self.count)
         #if self.ephemeral is not True:
         #    self.disabled = True      
         #await self.(view=self)
@@ -277,7 +361,7 @@ class SpotifyDetailsArtists(discord.ui.Button):
         embed.add_field(name="Top Tracks", value=f">>> {top_tracks}")
         embed.set_footer(text="Artist ID: %s" % (n), icon_url=cfg.SP_US["GREEN"])
             
-        await inter.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=self.ephemeral)
 
     
 class MakeYourProfile(discord.ui.View):
@@ -416,19 +500,22 @@ class ReSearch(discord.ui.Modal):
         self.keyword = keyword
         self.limit = limit
         self.embed = embed
-        self.ephemeral = ephemeral
+        #self.ephemeral = ephemeral
 
-        self.add_item(InputText(
-            style      = discord.InputTextStyle.short, 
-            max_length = 100, 
-            label      = "Reset a Keyword", 
-            value      = self.keyword,)
+        self.add_item(
+                InputText(
+                style      = discord.InputTextStyle.short, 
+                max_length = 100, 
+                label      = "set a Keyword", 
+                value      = self.keyword,
+            )
         )
-        self.add_item(InputText(
-            style      = discord.InputTextStyle.short, 
-            max_length = 2, 
-            label      = "Reset a Limit", 
-            value      = self.limit
+        self.add_item(
+            InputText(
+                style      = discord.InputTextStyle.short, 
+                max_length = 2, 
+                label      = "set a Limit", 
+                value      = self.limit
             )
         )
     
@@ -448,15 +535,14 @@ class ReSearch(discord.ui.Modal):
         embed.add_field(name="Album",   value="> **[%s](%s)**" % (m['album']['name'], m['album']['external_urls']['spotify']), inline=False)
         embed.add_field(name="Artists", value="> %s" % (", ".join(["**[%s](%s)**" % (fst['name'], scd['external_urls']['spotify']) for fst, scd in zip(m['artists'], m['artists'])])), inline=False)
         embed.set_thumbnail(url=m["album"]["images"][0]["url"])
-        await inter.edit_original_response(
+        #await inter.delete_original_response()
+        await inter.respond(
             embed     = embed,
-            ephemeral = self.ephemeral,
             view      = SpotifySelectUIView(
                             spotify_obj = result, 
                             limit       = limit, 
                             keyword     = keyword, 
                             url         = url,
                             interaction = inter,
-                            ephemeral   = self.ephemeral
                         )
         )

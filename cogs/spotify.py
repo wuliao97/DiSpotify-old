@@ -45,15 +45,15 @@ class SpotifyCmd(commands.Cog):
         simple  :Option(bool, name="simple", description="it's literally",  choices=[True, False], default=True)
     ):
         user = user or inter.user
-        material = fcs.spotify_forming(user)
+        material = spu.spotify_forming(user)
 
         if material[0]:
             sobj:discord.Spotify = material[1]
-            urls = fcs.spotify_extract(sobj.track_id)
+            urls = spu.spotify_extract(sobj.track_id)
             
             e = discord.Embed(color=cfg.SPFW)
             e.set_thumbnail(url=sobj.album_cover_url)
-            e.set_author(icon_url=user.display_avatar.url, name=f"{user.name}#{user.discriminator} is Listening")
+            e.set_author(icon_url=user.display_avatar, name=f"{user.name}#{user.discriminator} is Listening")
             e.add_field(
                 name="Title", value="> **[%s](%s)**" % (sobj.title, urls[0])
             )
@@ -77,9 +77,54 @@ class SpotifyCmd(commands.Cog):
                 ephemeral = spu.check(me_only), 
                 view      = view
             )
+            
         else:
-            e = discord.Embed(description=f"{user.mention} is not listening to Spotify!", color=cfg.SPFW)
+            e = discord.Embed(color=cfg.SPFW)
             await inter.response.send_message(embed=e, ephemeral=True)
+
+
+
+    @spotify.command(name="listen")
+    async def spotify_command(
+        self, 
+        inter:discord.Interaction, 
+        user:Option(discord.Member, default=None),
+        me_only :Option(str, name="me-only", description="Display to Me only?", choices=["Yes", "No"],) = "No", #default="No"),
+        simple  :Option(str, name="simple", description="No buttons", choices=["Yes", "No"], default="No") = "No" 
+    ):
+        user:discord.Member = user or inter.user
+        flag, material, message = spu.spotify(user)
+        e = discord.Embed(color=cfg.SPFW)
+        
+        if flag:
+            e.set_author(icon_url=user.display_avatar, name="%s is Listening!" % (user.display_name))
+            e.set_thumbnail(url=material.album_cover_url)
+            e.set_footer(
+                icon_url=cfg.SP_US["GREEN"], 
+                text="Time: %s | ID: %s" % (spu.track_time(material), material.track_id)
+            )
+            urls = spu.spotify_extract(material.track_id)
+            
+            e.add_field(
+                name="Title", value="> **[%s](%s)**" % (material.title, urls[0])
+            )
+            e.add_field(
+                name="Album", value="> **[%s](%s)**" % (material.album, urls[1]), inline=False
+            )
+            e.add_field(
+                name="Artist(s)", value="> %s" % fcs.forming_artist(material.artists, urls[2]), inline=False
+            )
+            
+            a, b, c = spu.spotify_ids_extract(material.track_id)
+        
+        else:
+            e.description = message
+            
+        ephemeral = fcs.check(me_only) if flag else True
+        view = discord.ui.View() if fcs.check(simple) or flag is False else spu.SpotifyDetails(a, b, c, ephemeral)
+        
+        await inter.response.send_message(embeds=[e], ephemeral=ephemeral, view=view)
+
 
 
 
@@ -91,12 +136,13 @@ class SpotifyCmd(commands.Cog):
         me_only :Option(str, "Display to just Me?", choices=["Yes", "No"], default="No")
     ):
         user = inter.user if user is None else user
-        material: discord.Spotify = fcs.spotify_forming(user)
-        if material[0]:
-            await inter.response.send_message(content=material[1].track_url, ephemeral=spu.check(me_only))
+        flag, material, message = spu.spotify(user)
+            
+        if flag:
+            await inter.response.send_message(content=material.track_url, ephemeral=spu.check(me_only))
+        
         else:
-            await inter.response.send_message(embed=material, ephemeral=True)
-            msg = await inter.response.send_message(embed=discord.Embed(title="test"))
+            await inter.response.send_message(embeds=[discord.Embed(description=message)], ephemeral=True)
 
 
 
@@ -106,20 +152,23 @@ class SpotifyCmd(commands.Cog):
         user    :discord.Member=None, 
         me_only :Option(str, name="me-only", description="Display to Me only?", choices=["Yes", "No"]) = "No"
     ):
-        user = user or inter.user
-        material = fcs.spotify_forming(user)
-        if material[0]:
-            sobj:discord.Spotify = material[1]
-            e = discord.Embed(title=sobj.title, color=cfg.SPFW).set_image(url=sobj.album_cover_url)
-            e.set_author(icon_url=user.display_avatar.url, name=f"{user.name}#{user.discriminator} is Listening")
+        user:discord.Member = user or inter.user
+        flag, material, message = spu.spotify(user)
+        e = discord.Embed(color=cfg.SPFW)
+        
+        if flag:
+            e = discord.Embed(title=material.title, color=cfg.SPFW).set_image(url=material.album_cover_url)
+            e.set_author(icon_url=user.display_avatar.url, name=f"{user.display_name} is Listening")
             await inter.response.send_message(
                 embeds    = [e],
-                view      = spu.SpotifyButtonS(url=sobj.track_url),
+                view      = spu.SpotifyButtonS(url=material.track_url),
                 ephemeral = spu.check(me_only))
+
         else:
             e = discord.Embed(
-                description=f"{user.mention} is not listening to Spotify!", color=cfg.SPFW
+                description=message, color=cfg.SPFW
             )
+            
             await inter.response.send_message(embeds=[e], ephemeral=True)
 
 
@@ -134,7 +183,7 @@ class SpotifyCmd(commands.Cog):
         result = cfg.sp.search(q = keyword, limit = limit if 15 > limit else 15)
         sp_list = []
         for track in result['tracks']['items']:
-            title, album = fcs.data_cutting(track['name'], track['album']['name'])
+            title, album = spu.data_cutting(track['name'], track['album']['name'])
             title_url  = track['external_urls']['spotify']
             artist     = track['artists'][0]['name']
             album_url  = track['album']['external_urls']['spotify']
@@ -206,13 +255,13 @@ class SpotifyCmd(commands.Cog):
     async def send_a_json(
         self, inter:discord.Interaction, id_or_url:Option(description="Song ID or Song URL")
     ):
-        id_or_url = fcs.id_or_url_check(id_or_url)
+        id_or_url = spu.id_or_url_check(id_or_url)
         sobj = cfg.sp.track(id_or_url)
+        s = time.time()
         
-        with open(path:=f".{os.sep}tx{os.sep}track.json", "w") as f:
+        with open(path:=f"{cfg.TXT}track.json", "w") as f:
             json.dump(obj=sobj, fp=f, indent=2, ensure_ascii=False)
         
-        s = time.time()
         
         await inter.response.send_message(content=f"Time{round((time.time() - s), 3)} ms", file=discord.File(path))
 
@@ -222,13 +271,12 @@ class SpotifyCmd(commands.Cog):
     async def send_a_json(
         self, inter:discord.Interaction, id_or_url:Option(description="Album ID or Album URL")
     ):
-        id_or_url = fcs.id_or_url_check(id_or_url)
+        id_or_url = spu.id_or_url_check(id_or_url)
         sobj = cfg.sp.album(id_or_url)
-        
-        with open(path:=f".{os.sep}tx{os.sep}album.json", "w") as f:
-            json.dump(obj=sobj, fp=f, indent=2, ensure_ascii=False)
-        
         s = time.time()
+        
+        with open(path:=f"{cfg.TXT}album.json", "w") as f:
+            json.dump(obj=sobj, fp=f, indent=2, ensure_ascii=False)
         
         await inter.response.send_message(content=f"Time{round((time.time() - s), 3)} ms", file=discord.File(path))
 
@@ -238,13 +286,12 @@ class SpotifyCmd(commands.Cog):
     async def send_a_json(
         self, inter:discord.Interaction, id_or_url:Option(description="Artist ID or Artist URL")
     ):
-        id_or_url = fcs.id_or_url_check(id_or_url)
+        id_or_url = spu.id_or_url_check(id_or_url)
         sobj = cfg.sp.artist(id_or_url)
-        
-        with open(path:=f".{os.sep}tx{os.sep}artist.json", "w") as f:
-            json.dump(obj=sobj, fp=f, indent=2, ensure_ascii=False)
-        
         s = time.time()
+        
+        with open(path:=f"{cfg.TXT}artist.json", "w") as f:
+            json.dump(obj=sobj, fp=f, indent=2, ensure_ascii=False)
         
         await inter.response.send_message(content=f"Time{round((time.time() - s), 3)} ms", file=discord.File(path))
 

@@ -26,7 +26,6 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error: d
     await ctx.respond(embeds=[e], ephemeral=True)
 
 
-
 def main(main:bool=True):
     for i in cfg.cog_files:
         try:

@@ -109,7 +109,7 @@ class Command(commands.Cog):
 
         embed.add_field(name="Platform", value=plat)
         embed.add_field(name= "Support", value= "> Deveroper: %s\n> Source: [Github.com](%s)\n> Our server: [DC Link](%s)" % (
-            self.bot.get_user(1039780426564239431).mention, "https://github.com/wuliao97/Dispotify", "https://discord.gg/greta")
+            self.bot.get_user(1039780426564239431).mention, "https://github.com/wuliao97/Dispotify", "https://discord.gg/dispotify")
                         , inline=False
         )
         now = str(datetime.datetime.now() - s_time)
