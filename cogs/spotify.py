@@ -37,54 +37,9 @@ class SpotifyCmd(commands.Cog):
         "playlist", "For Various Spotify Mylist!"
     )
 
-    @spotify.command(name="listening", description="")
-    async def spotify_cmd(self,
-        inter   :discord.Interaction, 
-        user    :Option(discord.Member, default=None), 
-        me_only :Option(bool, name="me-only", description="Display to Me only?", choices=["Yes", "No"], default="No"),
-        simple  :Option(bool, name="simple", description="it's literally",  choices=[True, False], default=True)
-    ):
-        user = user or inter.user
-        material = spu.spotify_forming(user)
-
-        if material[0]:
-            sobj:discord.Spotify = material[1]
-            urls = spu.spotify_extract(sobj.track_id)
-            
-            e = discord.Embed(color=cfg.SPFW)
-            e.set_thumbnail(url=sobj.album_cover_url)
-            e.set_author(icon_url=user.display_avatar, name=f"{user.name}#{user.discriminator} is Listening")
-            e.add_field(
-                name="Title", value="> **[%s](%s)**" % (sobj.title, urls[0])
-            )
-            e.add_field(
-                name="Album", value="> **[%s](%s)**" % (sobj.album, urls[1]), inline=False
-            )
-            e.add_field(
-                name="Artist(s)", value="> %s" % fcs.forming_artist(material[2], urls[2]), inline=False
-            )
-            e.set_footer(
-                icon_url=cfg.SP_US["GREEN"], text="Time: %s | ID: %s" % (
-                    dateutil.parser.parse(str(sobj.duration)).strftime('%M:%S'), sobj.track_id
-                )
-            )
-            
-            a,b,c = fcs.spotify_ids_extract(sobj.track_id)
-            view = spu.SpotifyDetails(a, b, c, spu.check(me_only)) if simple else discord.ui.View()
-            
-            await inter.response.send_message(
-                embeds    = [e], 
-                ephemeral = spu.check(me_only), 
-                view      = view
-            )
-            
-        else:
-            e = discord.Embed(color=cfg.SPFW)
-            await inter.response.send_message(embed=e, ephemeral=True)
 
 
-
-    @spotify.command(name="listen")
+    @spotify.command(name="listening")
     async def spotify_command(
         self, 
         inter:discord.Interaction, 
