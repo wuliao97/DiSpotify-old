@@ -109,18 +109,12 @@ def check(view):
 
 
 
-
-
-
-
-
-
-def forming_artist_2(material) -> str:
+def forming_artist_2(material):
     return ", ".join(["**[%s](%s)**" % (obj["name"], obj['external_urls']['spotify']) for obj in material])
 
 
 
-def forming_artist(artists, urls) -> str:
+def forming_artist(artists, urls):
     if isinstance(artists, str):
         artists = artists.split(", ")
     elif isinstance(artists, list):

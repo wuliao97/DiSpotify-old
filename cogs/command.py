@@ -189,7 +189,8 @@ class Command(commands.Cog):
             embed.add_field(
                 name   = f"Roles ( {len(new_role)} )", 
                 value  = f">>> {', '.join(new_role[::-1])}", 
-                inline = False)
+                inline = False
+            )
 
         embed.add_field(
             name  = "Created Account", 
@@ -221,9 +222,23 @@ class Command(commands.Cog):
 
 
 
+    async def extract_urs(self, server:discord.Guild) -> dict:
+        urls = {}
+        
+        urls["Icon"] = server.icon
+        
+        if server.banner:
+            urls["Banner"] = server.banner.url
+
+        if server.splash:
+            urls["Splash"] = server.splash.url
+
+        return urls
+
+
 
     @server_.command(name="information", description="Get information about The server")
-    async def send_server_info(self, inter:discord.Interaction):
+    async def send_server_info(self, inter:discord.Interaction):        
         guild                = inter.guild
         req                  = await self.bot.http.request(discord.http.Route("GET", "/guilds/" + str(guild.id)))
         tchannels, vchannels = len(guild.text_channels), len(guild.voice_channels)
@@ -236,10 +251,14 @@ class Command(commands.Cog):
         embed.add_field(name = "🆔 ID",       value = guild.id)
         embed.add_field(name = "🗓️ Creation", value = f"{outside}({inside})")
         
-        embed.add_field(name  = f"👥 Members ({guild.member_count})", value = "**%s** User | **%s** Bot\n**%s** Online(user)" % (
-                            user_:=sum(1 for user in guild.members if not user.bot),
-                            guild.member_count-user_,
-                            sum(1 for member in guild.members if member.status != discord.Status.offline and not member.bot)))
+        embed.add_field(
+            name=f"👥 Members ({guild.member_count})", 
+            value="**%s** User | **%s** Bot\n**%s** Online(user)" % (
+                user_:=sum(1 for user in guild.members if not user.bot),
+                guild.member_count-user_,
+                sum(1 for member in guild.members if member.status != discord.Status.offline and not member.bot)
+            )
+        )
         
         embed.add_field(
             name= f"🗨️ Channels ({tchannels + vchannels})", 
@@ -260,11 +279,43 @@ class Command(commands.Cog):
         if vanity:=req["vanity_url_code"]:
             embed.add_field(name="🔗 Vanity", value=f"`{vanity}`")
         
+        urls = await self.extract_urs(guild)
+        embed.add_field(
+            name  = "URLs",
+            value = ">>> " + ", ".join([f"[{k}]({v})" for k,v in urls.items()]),
+            inline = False
+        )
+        
         if guild.banner:
             embed.set_image(url=guild.banner.url)
+            
         await inter.response.send_message(embed=embed)
 
 
+
+    @server_.command(name="images")
+    async def server_images(self, inter:discord.Interaction):
+        guild = inter.guild
+        urls = await self.extract_urs(inter.guild)
+        
+        e = discord.Embed(color=cfg.SPFB)
+        e.set_thumbnail(url=guild.icon)
+        e.add_field(name="URLs",  value=">>> " + ", ".join([f"[{k}]({v})" for k, v in urls.items()]))
+        
+        es = [e]
+        
+        if guild.banner:
+            e.set_image(url=guild.banner.url)
+            
+            if guild.splash:
+                e2 = discord.Embed(color=cfg.SPFB)
+                e2.set_image(url=guild.splash.url)
+                es.append(e2)
+        else:
+            e.set_image(url=guild.splash.url)    
+        
+        await inter.response.send_message(embeds=es)
+        
 
     @server_.command(name="splash")
     async def server_splash(sedf, inter:discord.Interaction):

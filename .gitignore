@@ -2,8 +2,9 @@
 **/done/
 /Lavalink/
 /config/config.json
-/cogs/*.txt
 *.txt
+*.json
 !requirements.txt
 .cache
-test.py
+.test.py
+run.sh
