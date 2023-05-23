@@ -1,10 +1,11 @@
 **/__pycache__/
 **/done/
 /Lavalink/
+/resource/
 /config/config.json
 *.txt
 *.json
-!requirements.txt
+*.sh
 .cache
-.test.py
-run.sh
+test.py
+!requirements.txt

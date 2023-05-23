@@ -19,12 +19,12 @@ async def on_command_error(inter, error):
     e = discord.Embed(title="Error", description=error, color=discord.Color.red)
     await inter.respond(embeds=[e], ephemeral=True)
 
-
+"""
 @bot.event
 async def on_application_command_error(ctx: discord.ApplicationContext, error: discord.DiscordException):
     e = discord.Embed(title="Error", description=error, color=discord.Color.red())
     await ctx.respond(embeds=[e], ephemeral=True)
-
+"""
 
 def main(main:bool=True):
     for i in cfg.cog_files:
