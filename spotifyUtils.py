@@ -289,7 +289,7 @@ class SpotifyDetails(discord.ui.View):
         total_time = datetime.datetime.fromtimestamp(total_time).strftime(TimeFormat.EIGHT if total_time > 3600 else TimeFormat.TEN)
         
         embed.set_footer(
-            text="%s, Label: %s" % (total_time, self.album_obj["label"]), icon_url=cfg.SP_US["GREEN"]
+            text="Total Time: %s, Label: %s" % (total_time, self.album_obj["label"]), icon_url=cfg.SP_US["GREEN"]
         )
         
         await inter.respond(embed=embed, ephemeral=self.ephemeral)
@@ -409,6 +409,7 @@ class MakeYourProfile(discord.ui.View):
         TAG_FONT   = ImageFont.truetype(cfg.SP_FS + "Gotham-Black.otf", 90)
         TAG2_FONT  = ImageFont.truetype(cfg.SP_FS + "Gotham-Bold.otf", 50)
         TRACK_FONT = ImageFont.truetype(cfg.SP_FS + "Gotham-Black.otf", 55)
+        
         #artist_font = ImageFont.truetype(cfg.SP_FS + "GothamLight.ttf")
 
         # positions
@@ -427,7 +428,7 @@ class MakeYourProfile(discord.ui.View):
             track_3_pos,
             track_4_pos
         ]
-    
+        
         # Draw
         draw_on_image = ImageDraw.Draw(image)
         draw_on_image.text(Name_pos, name, "white", font=NAME_FONT)

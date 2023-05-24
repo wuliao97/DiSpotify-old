@@ -40,11 +40,11 @@ class Command(commands.Cog):
         )
 
 
-    user_ = discord.SlashCommandGroup(
+    user_c = discord.SlashCommandGroup(
         "user", "various user command"
     ) 
 
-    server_ = discord.SlashCommandGroup(
+    server_c = discord.SlashCommandGroup(
         "server", "various server command"
     )
 
@@ -118,49 +118,52 @@ class Command(commands.Cog):
 
 
 
-    @user_.command(name="avatar", description="Get the user icon, (And Server icon If user has)")
+    @user_c.command(name="avatar", description="Get the user icon, (And Server icon If user has)")
     async def send_user_avatar(self, inter:discord.Interaction, user:discord.Member = None):
         user   = user if user else inter.user
-        avatar = user.avatar.url
+        avatar = user.avatar
+        
         e = discord.Embed(
-            description = "%s's Avatar\n> **[URL](%s)**" % (user.mention, avatar),
-            color       = cfg.SPFB
+            description=f"**{user.mention}'s Avatar**", color=cfg.SPFB
         )
+        
+        if display:=(user.display_avatar):
+            e.set_image(url=display.url)
+            e.description += f"\n> [Avatar]({display.url})"
+        
+        if (display != avatar and avatar is not None):
+            e.set_thumbnail(url=avatar.url)
+            e.description += f"\n> [Avatar 2]({avatar.url})"
 
-        if (avatar == (server_avatar := user.display_avatar.url)):
-            e.set_image(url=avatar)
-        else:
-            e.description += "\n> **[Server URL](%s)**" % server_avatar
-            e.set_image(url = server_avatar)
-            e.set_thumbnail(url=avatar)
+        print(avatar)
         
         await inter.response.send_message(embed=e)
 
 
 
-    @user_.command(name="banner", description="Send the User Banner If User have")
+    @user_c.command(name="banner", description="Send the User Banner If User have")
     async def send_banner_user(self, inter:discord.Interaction, user:discord.Member = None):
         user = await self.bot.fetch_user(user.id if user else inter.user.id)   
-        e = discord.Embed(color = cfg.SPFB)
+        e = discord.Embed(color=cfg.SPFB)
+        
         if user.banner:
-            e.description = f"{user.mention}'s Banner\n"
-            e.description += f"> [URL]({user.banner.url})"
+            e.description = f"**{user.mention}'s Banner**\n"
+            e.description += f"> [Banner]({user.banner.url})"
             e.set_image(url = user.banner.url)
-            await inter.response.send_message(embed = e)
+            await inter.response.send_message(embed=e)
         else:
-            e.description = user.name + " **haven't a Banner**. Go away."
-            await inter.response.send_message(embed = e, ephemeral = True)
+            e.description = user.name + " **haven't a Banner**"
+            await inter.response.send_message(embed=e, ephemeral=True)
 
 
 
-    @user_.command(name="information", description="Send the User Information")
+    @user_c.command(name="information", description="Send the User Information")
     async def send_user_info(self, inter:discord.Interaction, user:discord.Member = None):
         async def extract_urls(user:discord.Member) -> list[str]:
             urls = {}
             
-            try:urls["User Avatar"] = user.avatar.url
-            except:pass
-
+            urls["User Avatar"] = user.avatar.url
+            
             if (user.avatar) != (url2:=user.display_avatar):
                 urls["Server Avatr"] = url2
 
@@ -217,8 +220,10 @@ class Command(commands.Cog):
         if (user__ := await self.bot.fetch_user(user.id)):
             if user__.banner:
                 embed.set_image(url = user__.banner.url)
-
-        await inter.response.send_message(embed=embed)
+        
+        await inter.response.send_message(
+            embed=embed, view=fcs.UserPermissionsView(user=user)
+        )
 
 
 
@@ -237,7 +242,7 @@ class Command(commands.Cog):
 
 
 
-    @server_.command(name="information", description="Get information about The server")
+    @server_c.command(name="information", description="Get information about The server")
     async def send_server_info(self, inter:discord.Interaction):        
         guild                = inter.guild
         req                  = await self.bot.http.request(discord.http.Route("GET", "/guilds/" + str(guild.id)))
@@ -293,7 +298,7 @@ class Command(commands.Cog):
 
 
 
-    @server_.command(name="images")
+    @server_c.command(name="images")
     async def server_images(self, inter:discord.Interaction):
         guild = inter.guild
         urls = await self.extract_urs(inter.guild)
@@ -317,7 +322,7 @@ class Command(commands.Cog):
         await inter.response.send_message(embeds=es)
         
 
-    @server_.command(name="splash")
+    @server_c.command(name="splash")
     async def server_splash(sedf, inter:discord.Interaction):
         e = discord.Embed(color=cfg.SPFB)
         if inter.guild.splash:

@@ -28,10 +28,7 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error: d
 
 def main(main:bool=True):
     for i in cfg.cog_files:
-        try:
-            bot.load_extension(i)
-        except Exception as err:
-            print(err)
+        bot.load_extension(i)
 
     token = cfg.TOKEN if main else cfg.SUB
     bot.run(token) 

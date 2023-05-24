@@ -170,10 +170,14 @@ class SpotifyCmd(commands.Cog):
         result = cfg.sp.search(q=keyword, limit=limit)
         url    = spu.search_url(keyword)
 
-        embed = discord.Embed(title="Jump to Spotify", url=url, color=cfg.SPFW)
+        embed = discord.Embed(
+            title="Jump to Spotify", url=url, color=cfg.SPFW
+        )
+        
         embed.set_author(
             name="%s#%s is Searching" % (inter.user.display_name, inter.user.discriminator), icon_url=inter.user.display_avatar
         )
+        
         embed.set_footer(
             text="Page %s/%s of Songs | Query: %s" % (0 + 1, limit, keyword), icon_url = cfg.SP_US["GREEN"]
         )
@@ -212,13 +216,11 @@ class SpotifyCmd(commands.Cog):
     ):
         id_or_url = spu.id_or_url_check(id_or_url)
         sobj = cfg.sp.track(id_or_url)
-        s = time.time()
         
         with open(path:=f"{cfg.TXT}track.json", "w") as f:
             json.dump(obj=sobj, fp=f, indent=2, ensure_ascii=False)
         
-        
-        await inter.response.send_message(content=f"Time{round((time.time() - s), 3)} ms", file=discord.File(path))
+        await inter.response.send_message(file=discord.File(path))
 
 
 
@@ -228,12 +230,11 @@ class SpotifyCmd(commands.Cog):
     ):
         id_or_url = spu.id_or_url_check(id_or_url)
         sobj = cfg.sp.album(id_or_url)
-        s = time.time()
         
         with open(path:=f"{cfg.TXT}album.json", "w") as f:
             json.dump(obj=sobj, fp=f, indent=2, ensure_ascii=False)
         
-        await inter.response.send_message(content=f"Time{round((time.time() - s), 3)} ms", file=discord.File(path))
+        await inter.response.send_message(file=discord.File(path))
 
 
 
@@ -243,16 +244,15 @@ class SpotifyCmd(commands.Cog):
     ):
         id_or_url = spu.id_or_url_check(id_or_url)
         sobj = cfg.sp.artist(id_or_url)
-        s = time.time()
         
         with open(path:=f"{cfg.TXT}artist.json", "w") as f:
             json.dump(obj=sobj, fp=f, indent=2, ensure_ascii=False)
         
-        await inter.response.send_message(content=f"Time{round((time.time() - s), 3)} ms", file=discord.File(path))
+        await inter.response.send_message(file=discord.File(path))
 
 
 
-    @spotify.command(name = "profile", description = "NOW CODING | Make a Spotify profile -ish")
+    @spotify.command(name="profile", description="Make a Spotify profile -ish")
     async def make_a_profile(
         self, 
         inter   :discord.Interaction,
@@ -262,8 +262,8 @@ class SpotifyCmd(commands.Cog):
         e.add_field(name="None", value=""
         ).add_field(name="None", value="", inline=False
         ).add_field(name="None", value=""
-        ).add_field(name="None", value="", inline=False)
-        e.set_footer(text="Alphabet Only!")
+        ).add_field(name="None", value="", inline=False
+        ).set_footer(text="※Alphabet Only!")
         
         await inter.response.send_message(
             embed=e, 
@@ -272,7 +272,7 @@ class SpotifyCmd(commands.Cog):
         )
     
 
-"""
+    """
     @pl.command(name="list")
     async def play_list(self, inter:discord.Interaction):
         current = cfg.spti.current_user_playlists()["items"]
@@ -333,7 +333,7 @@ class SpotifyCmd(commands.Cog):
             #e = discord.Embed(title=f"{playlist_name} created!", url=url)
             #e.set_footer(text="keyword: %s | Limit: %s" % (keyword, limit))
             await inter.response.send_message(content=url)
-"""
+    """
 
 
 

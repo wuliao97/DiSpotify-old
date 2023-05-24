@@ -12,19 +12,14 @@ from discord.ui import *
 import os
 import io
 import json
-import time
+import enum
 import requests
 import textwrap as tw
-import platform as pl
-import datetime
 
-import discord_timestamps as dts 
 import discord_webhook as dw
 
 from pilmoji import Pilmoji
 from PIL import Image, ImageDraw, ImageFont
-from discord_timestamps.formats import TimestampType
-
 
 
 
@@ -43,8 +38,11 @@ class Fun(commands.Cog):
         "5ch", "various 5ch command", guild_ids=[1103669665756098652]
     )
     
-    wanted = discord.SlashCommandGroup("wanted", "")
-    
+    wanted = discord.SlashCommandGroup(
+        "wanted", "", guild_ids=[1103669665756098652]
+    )
+
+
 
     @wanted.command(name="list")
     async def wanted_list(
@@ -131,20 +129,23 @@ class Fun(commands.Cog):
     ):
         with open(f"{cfg.FIVECH}name.json", "r+", encoding="utf-8") as f:
             data:dict= json.load(f)
-            
-            if (format_handle and name is None):
-                data[inter.user.id] = name
-            else:
-                old_name = None
+            old_name = None
             
             if (uid:=str(inter.user.id)) in data:
                 old_name = data.pop(uid)
+            
+            if (format_handle is False and name is not None):
+                data[inter.user.id] = name            
+                
+                
             
             f.seek(0)
             f.write(json.dumps(data, ensure_ascii=False, indent=2))
             f.truncate()
             
-        e = discord.Embed(title="正常に登録").add_field(name="New", value=f"```{name}```")
+        e = discord.Embed(title="正常に登録" if format_handle is False else "正常にリセット")
+        if name and format_handle is False:
+            e.add_field(name="New", value=f"```{name}```")
         if old_name:
             e.add_field(name="Old", value=f"```{old_name}```")
             
@@ -266,33 +267,29 @@ class Fun(commands.Cog):
         await inter.respond("Here's your file!")
     """
     
+    
 
-    @commands.message_command(name="Make it a Quote(Fake)")
-    async def make_it_a_quote(self, inter:discord.Interaction, message:discord.Message):
-        W, H = 1200, 630
-        
-        def make_it_a_quote_base(url:str, msg, mode="L"):
+    def make_it_a_quote_base(self, url:str, msg, mode="L"):
             icon_img = Image.open(io.BytesIO(requests.get(url).content)).convert(mode=mode)
             background_img = Image.open(f"{cfg.QUOTE}background.png")
             mask_img = Image.open(f"{cfg.QUOTE}base-gd-3.png")
             black = Image.open(f"{cfg.QUOTE}background.png")
-            icon = icon_img.resize((H, H))
+            icon = icon_img.resize((630, 630))
             background_img.paste(icon)
             result = Image.composite(black, background_img, mask=mask_img)
             draw = ImageDraw.Draw(result)
 
-            tsize_t = draw_text(result, (850, 270), msg.content, size=45, color=(255,255,255,255), split_len=14, auto_expand=True) 
+            tsize_t = self.draw_text(result, (850, 270), msg.content, size=45, color=(255,255,255,255), split_len=14, auto_expand=True) 
             user_name:str =  f"{msg.author.display_name} ({msg.author.name})#{msg.author.discriminator}" if not msg.author.display_name==msg.author.name else f"{msg.author.name}#{msg.author.discriminator}"
 
-            draw_text(result, (850, tsize_t[2] + 40), str(f"- {user_name}"), size=25, color=(255,255,255,255), split_len=25, disable_dot_wrap=True)
+            self.draw_text(result, (850, tsize_t[2] + 40), str(f"- {user_name}"), size=25, color=(255,255,255,255), split_len=25, disable_dot_wrap=True)
             
             frame = f"{cfg.QUOTE}done{os.sep}result.png"
-            print(os.path.exists(frame))
             result.save(frame)
             
             return  frame, (result.size)
         
-        def draw_text(im, ofs, string, font=f'{cfg.FONTS}MPLUSRounded1c-Regular.ttf', size=16, color=(0,0,0,255), split_len=None, padding=4, auto_expand=False, emojis: list = [], disable_dot_wrap=False):
+    def draw_text(self, im, ofs, string, font=f'{cfg.FONTS}MPLUSRounded1c-Regular.ttf', size=16, color=(0,0,0,255), split_len=None, padding=4, auto_expand=False, emojis: list = [], disable_dot_wrap=False):
             draw = ImageDraw.Draw(im)
             fontObj = ImageFont.truetype(font, size=size)
 
@@ -346,19 +343,40 @@ class Fun(commands.Cog):
             real_y = ofs[1] + adj_y + dy
             return (0, dy, real_y)
 
-
+    @commands.message_command(name="Make it a Quote(Fake)")
+    async def make_it_a_quote(self, inter:discord.Interaction, message:discord.Message):
         msg = await inter.channel.fetch_message(message.id)
         url = message.author.display_avatar.url
         
-        file_name, b = make_it_a_quote_base(url=url, msg=msg, mode="L")
-        b = iter(b)
+        file_name, b = self.make_it_a_quote_base(url=url, msg=msg, mode="L")
+        h, w = b
 
         e = discord.Embed(color=0x2f3136)
         e.set_image(url=f"attachment://{file_name}")
-        e.set_footer(text=f"{next(b)}x{next(b)}, {fcs.convert_size(os.stat(file_name).st_size)}")
+        e.set_footer(text=f"{h}x{w}, {fcs.convert_size(os.stat(file_name).st_size)}")
         file = file=discord.File(file_name)
         
         await inter.response.send_message(embed=e, file=file)
+
+    """
+    @commands.command(name="quote")
+    async def make_it_a_quote(self, inter:discord.Interaction, message:discord.Message):
+        msg = await inter.channel.fetch_message(message.id)
+        url = message.author.display_avatar.url
+        
+        file_name, b = self.make_it_a_quote_base(url=url, msg=msg, mode="L")
+        h, w = b
+
+        e = discord.Embed(color=0x2f3136)
+        e.set_image(url=f"attachment://{file_name}")
+        e.set_footer(text=f"{h}x{w}, {fcs.convert_size(os.stat(file_name).st_size)}")
+        file = file=discord.File(file_name)
+        
+        await inter.response.send_message(embed=e, file=file)
+    """
+
+
+
 
 
 def setup(bot:discord.Bot):
