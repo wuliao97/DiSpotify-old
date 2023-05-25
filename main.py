@@ -3,14 +3,13 @@ import config as cfg
 
 """Libraries for Discord"""
 import discord
-from discord.ext import commands
 
 """Useing Other Libraries"""
 import sys
 
 
 
-bot = commands.Bot(
+bot = discord.Bot(
     command_prefix="s.", intents=discord.Intents.all()
 )
 
