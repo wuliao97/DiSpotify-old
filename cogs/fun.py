@@ -42,36 +42,11 @@ class Fun(commands.Cog):
         "wanted", "", guild_ids=[1103669665756098652]
     )
 
+    webhook = discord.SlashCommandGroup(
+        "webhook"
+    )
 
 
-    @wanted.command(name="list")
-    async def wanted_list(
-        self, inter:discord.Interaction, send_a_json:Option(bool, "Would you want to send a ID of File?", choices=[True, False], default=False)
-    ):
-        with open((c:=f".{os.sep}config{os.sep}hates.json"), encoding="utf-8") as f:
-            data = json.load(f)
-        e = discord.Embed(description="\n".join(map(str, data["ids"])))
-        file = discord.File(c) if send_a_json else None
-        
-        await inter.response.send_message(embeds=[e], file=file)
-    
-    """
-    @wanted.command(name="add")
-    async def wanted_list(
-        self, inter:discord.Interaction, id:str
-    ):
-        with open((f".{os.sep}config{os.sep}hates.json"), "r+", encoding="utf-8") as f:
-            data = json.load(f)
-            data["ids"].append(id)
-            
-            f.seek(0)
-            f.write(json.dumps(data, ensure_ascii=False, indent=2))
-            f.truncate()
-            
-        e = discord.Embed(title="Successfully added!")
-        
-        await inter.response.send_message(embeds=[e], ephemeral=True)
-    """
     
     @commands.Cog.listener()
     async def on_message(self, message:discord.message.Message):
@@ -179,33 +154,7 @@ class Fun(commands.Cog):
         
         await inter.response.send_message("send!", ephemeral=True, delete_after=3)
         
-    """
-    @commands.command(name="test-questions")
-    async def q_information_security(self, ctx):
-        var = random.randint(1, 10)
-        base_embed = discord.Embed(color = 0x6cd1c1)
-
-        r_1 = "<:_1:973779279575924738>"
-        r_2 = "<:_2:973779279605301248>"
-        r_3 = "<:_3:973779279248785409>"
-        r_4 = "<:_4:973779300258025472>"
-
-        answer = ""
-        asw = ""
-        try:
-            reaction, user = await self.bot.wait_for("reaction_add",timeout = 30.0,check = lambda ctx: user == ctx.author and str(reaction.emoji) in [r_1, r_2, r_3, r_4])
-        except asyncio.TimeoutError:
-            e = discord.Embed(title = ":timer:時間切れ！",description = "よって中断します。",color = 0xff0000)
-            await ctx.send(embed=e)
-        else:
-            while True:
-                if str(reaction.emoji) == asw:
-                    e = discord.Embed(title = ":o:正解",color = 0x0000ff)
-                    await ctx.send(embed= e)
-                    break
-                else:
-                    mistake_e = discord.Embed(title = ":x:不正解",description = "None",color = 0xff0000)
-    """
+        
 
     @commands.slash_command(name="heart", description="make heart with string")
     async def haert_string(self, inter:discord.Interaction, string:Option(str, "material string")):
@@ -215,59 +164,6 @@ class Fun(commands.Cog):
         await inter.response.send_message(embed=e)
 
 
-
-    """    @gifcmd.command(name="create")
-    async def gifcmd_create(
-        self, 
-        inter:discord.Interaction, 
-        mp4:Option(discord.Attachment, ""),
-        scale:Option(int, "Image scale:  1980px > scale > 100px") = None,
-        quality:Option(str, "GIF Quality", choices=["high", "low"]) = "low",
-    ):
-        def toGif(mp4:discord.Attachment, quality:str, scale:int):
-            path = f"{cfg.GIF}"
-            quality = 30 if quality == "high" else 10
-
-            output = f"{cfg.GIF}{os.sep}done{os.sep}{mp4.filename}"
-            ffmpeg = f'ffmpeg -y -i {mp4} -filter_complex "[0:v] fps={quality},scale={scale}:-1,split [a][b];[a] palettegen [p];[b][p] paletteuse=dither=none" {output}'
-            
-            s_time = time.time()
-            systemcalling(ffmpeg)
-            e_time = round((time.time() - s_time), 2)
-
-            return output, e_time
-
-        def systemcalling(code):
-            os.system(code)
-
-            
-        file:discord.Attachment = mp4
-        
-        if scale is not None:
-            if not 1980 > scale > 100:
-                raise Exception("PLEASE THE SET IN  1980px > scale > 100px")
-        else:
-            scale = 680
-        
-        if not ".mp4" in file.filename:
-            raise NameError("Please set a mp4")
-        
-        
-        material = Image.open(io.BytesIO(mp4))
-        material.save(path:=cfg.GIF + "material.mp4")
-        
-        fn, end_time = toGif(path, quality, scale)
-        
-        anon = AnonFile()
-        upload = anon.upload(fn, progressbar=True)
-        
-        e = discord.Embed(title="Dwnload", url=upload.url.geturl(), color=cfg.SPFB)
-        e.add_field(name="Time", value=f">>> {end_time}")
-                
-        await inter.respond("Here's your file!")
-    """
-    
-    
 
     def make_it_a_quote_base(self, url:str, msg, mode="L"):
             icon_img = Image.open(io.BytesIO(requests.get(url).content)).convert(mode=mode)
@@ -357,25 +253,6 @@ class Fun(commands.Cog):
         file = file=discord.File(file_name)
         
         await inter.response.send_message(embed=e, file=file)
-
-    """
-    @commands.command(name="quote")
-    async def make_it_a_quote(self, inter:discord.Interaction, message:discord.Message):
-        msg = await inter.channel.fetch_message(message.id)
-        url = message.author.display_avatar.url
-        
-        file_name, b = self.make_it_a_quote_base(url=url, msg=msg, mode="L")
-        h, w = b
-
-        e = discord.Embed(color=0x2f3136)
-        e.set_image(url=f"attachment://{file_name}")
-        e.set_footer(text=f"{h}x{w}, {fcs.convert_size(os.stat(file_name).st_size)}")
-        file = file=discord.File(file_name)
-        
-        await inter.response.send_message(embed=e, file=file)
-    """
-
-
 
 
 

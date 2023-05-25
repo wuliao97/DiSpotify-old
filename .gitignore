@@ -6,6 +6,7 @@
 *.txt
 *.json
 *.sh
+!run.sh
 .cache
 test.py
 !requirements.txt

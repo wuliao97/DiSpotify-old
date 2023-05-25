@@ -4,7 +4,39 @@ from spotipy.oauth2 import SpotifyClientCredentials
 import spotipy.util as util
 
 
-with open(f".{os.sep}config{os.sep}config.json") as f:
+"""PATHs"""
+ROOT = os.path.split(os.path.abspath(__file__))[0]
+RESOURCE = ROOT + os.sep + "resource" + os.sep
+
+CONFIG = RESOURCE + "config" + os.sep
+TXT   = RESOURCE + "tx"    + os.sep
+IMAGE = RESOURCE + "image" + os.sep
+
+GIF   = IMAGE + "gif"   + os.sep
+PORCO = IMAGE + "porco" + os.sep
+QUOTE = IMAGE + "quote" + os.sep
+
+SPOTIFY_PROFILE = IMAGE + "spotifyprofile" + os.sep
+SP_PF =  SPOTIFY_PROFILE # Alias
+SPOTIFY_PF_DONE = SP_PF + "done" + os.sep
+
+
+FONTS = RESOURCE + "fonts" + os.sep
+HIRAGINO = FONTS + "hiragino" + os.sep
+SPOTIFY_FONTS = FONTS + "Spotify-Font" + os.sep
+SP_FS = SPOTIFY_FONTS # Alias
+
+INFOR = RESOURCE + "infor" + os.sep
+DATA  = INFOR + "data" + os.sep
+FIVECH   = INFOR + "5ch"  + os.sep
+
+STARRAIL = RESOURCE + "star_rail" + os.sep
+SR_CH    = STARRAIL + "character.json"
+
+#print(os.path.exists(SPOTIFY_PF_DONE))
+
+
+with open(CONFIG + "config.json") as f:
     CFG = json.load(f)
 
 
@@ -26,7 +58,6 @@ ADMINS  = CFG["ADMINS"]
 SERVERS = CFG["VERIFIED_SERVERS"]
 
 
-
 """Other"""
 "COLOR - "
 NOC  = 0x2f3136
@@ -35,39 +66,6 @@ FAV2 = 191414
 
 SPFW = 0x1DB954
 SPFB = 0x191414
-
-
-
-"""PATHs"""
-ROOT = os.curdir
-ROOT = ROOT + os.sep + "resource" + os.sep
-
-TXT   = ROOT + "tx"    + os.sep
-IMAGE = ROOT + "image" + os.sep
-
-GIF   = IMAGE + "gif"   + os.sep
-PORCO = IMAGE + "porco" + os.sep
-QUOTE = IMAGE + "quote" + os.sep
-
-SPOTIFY_PROFILE = IMAGE + "spotifyprofile" + os.sep
-SP_PF =  SPOTIFY_PROFILE # Alias
-SPOTIFY_PF_DONE = SP_PF + "done" + os.sep
-
-
-FONTS = ROOT + "fonts" + os.sep
-HIRAGINO = FONTS + "hiragino" + os.sep
-SPOTIFY_FONTS = FONTS + "Spotify-Font" + os.sep
-SP_FS = SPOTIFY_FONTS # Alias
-
-INFOR = ROOT + "infor" + os.sep
-DATA  = INFOR + "data" + os.sep
-FIVECH   = INFOR + "5ch"  + os.sep
-
-STARRAIL = ROOT + "star_rail" + os.sep
-SR_CH    = STARRAIL + "character.json"
-
-#print(os.path.exists(SPOTIFY_PF_DONE))
-
 
 
 
@@ -102,6 +100,5 @@ spti = spotipy.Spotify(
 
 
 cog_files = [
-    f"cogs.{os.path.splitext(fp)[0]}" for fp in os.listdir(f"{os.curdir}{os.sep}cogs{os.sep}") if fp.endswith(".py")
+    f"cogs.{os.path.splitext(fp)[0]}" for fp in os.listdir(ROOT + os.sep + "cogs") if fp.endswith(".py")
 ]
-
