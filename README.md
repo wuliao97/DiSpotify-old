@@ -1,2 +1,2 @@
-# NEW_DiSpotify
+# DiSpotify　 - legacy code
 
